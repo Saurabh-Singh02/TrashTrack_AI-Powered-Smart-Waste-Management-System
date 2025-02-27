@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Companies{% endblock title %}
+
+{% block style %}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+
+.Background {
+    height: 50vh;
+    background-image: url("https://www.guardforce.com.hk/media/images/news/smart%20bin%20collection%20v2-01_1600x864.jpg"); /* Replace with actual image path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.Background h1 {
+    font-family: "Poppins", sans-serif;
+    color: rgb(255, 255, 255);
+    font-size: 5rem;
+    font-weight: 700;
+    margin-right: 5%;
+    text-align: right; /* Align the heading to the left */
+}
+
+.Background p {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0;
+    line-height: 1.5; /* Better spacing between lines */
+    text-align: center;
+    text-align-last: justify;
+    margin-right: 30%;
+    background-color: #ffffff4b ;
+    border-radius: 50px 0px 50px 0px;
+    padding: 4%;/* Align the paragraph text to the left */
+}
+
+.bg-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns for H1 and P */
+    grid-template-rows: auto auto;
+    gap: 20px; /* Space between the columns */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    max-width: 90%; /* Limit the width of the content */
+    width: 100%; /* Ensure content spans full width */
+}
+.single{
+    grid-column: span 2;
+    margin-top: 1rem;
+}
+
+.Background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.67); /* Dark overlay */
+    z-index: 0;
+  }
+  .bg-content a {
+    color: rgb(255, 255, 255);
+    background: #008f3000;
+    padding: 10px 20px;
+    border-color: rgb(255, 255, 255);
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.bg-content a:hover {
+    color: rgb(255, 255, 255);
+    background:  #008F30;
+    border-color:  #008F30;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #2d6a4f; /* Green color for titles */
+    margin-bottom: 20px;
+}
+
+
+.company-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two cards per row */
+    gap: 20px;
+    padding: 30px;
+}
+
+.company {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.company:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+}
+
+.company h3 {
+    font-size: 1.5rem;
+    color: #2d6a4f; /* Green color for company names */
+    margin-bottom: 10px;
+}
+
+.company p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+{% endblock style %}
+
+{% block content %}
+
+<section class="Background">
+    <div class="bg-content">
+        <h1>REGISTER<br>NOW</h1>
+        <p>“Register your company on TrashTrack and access <br>real-time waste tracking and analytics. Optimize <br>waste management, streamline operations, and collaborate on <br>sustainability. Sign up today to transform <br> your waste management approach with smarter solutions!”</p>
+        <div class="single" id=""><a id="cont" href="{% url 'company_signup' %}">Sign Up for Company Account</a>
+        </div>
+    </div>
+</section>
+<section>
+    <h1>Registered Companies</h1>
+    <h2></h2>
+    <div class="company-list">
+        {% for company in companies %}
+        <div class="company">
+            <h3>{{ company.name }}</h3>
+            <p>Contact Info: {{ company.contact_info }}</p>
+            <p>Registered At: {{ company.registered_at }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock content %}

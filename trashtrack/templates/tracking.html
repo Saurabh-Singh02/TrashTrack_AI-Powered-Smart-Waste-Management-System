@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Tracking{% endblock title %}
+
+{% block style %}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+
+.Background {
+    height: 50vh;
+    background-image: url("https://cd20a614c9.clvaw-cdnwnd.com/947f78598f8bbecad03916d6f074aaec/200000184-d8027d802a/shutterstock.jpg?ph=cd20a614c9"); /* Replace with actual image path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.Background h1 {
+    font-family: "Poppins", sans-serif;
+    color: rgb(255, 255, 255);
+    font-size: 5rem;
+    font-weight: 700;
+    margin-right: 5%;
+    text-align: right; /* Align the heading to the left */
+}
+
+.Background p {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0;
+    line-height: 1.5; /* Better spacing between lines */
+    text-align: center;
+    text-align-last: justify;
+    margin-right: 30%;
+    background-color: #ffffff4b ;
+    border-radius: 50px 0px 50px 0px;
+    padding: 4%;/* Align the paragraph text to the left */
+}
+
+.bg-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns for H1 and P */
+    gap: 20px; /* Space between the columns */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    max-width: 90%; /* Limit the width of the content */
+    width: 100%; /* Ensure content spans full width */
+}
+
+.Background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.67); /* Dark overlay */
+    z-index: 0;
+  }
+  
+h1, h2 {
+    text-align: center;
+    color: #2d6a4f; /* Green color for titles */
+    margin-bottom: 20px;
+}
+
+.vehicle-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two cards per row */
+    gap: 20px;
+    padding: 30px;
+}
+
+.vehicle {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.vehicle:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+}
+
+.vehicle h3 {
+    font-size: 1.5rem;
+    color: #2d6a4f; /* Green color for vehicle details */
+    margin-bottom: 10px;
+}
+
+.vehicle p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.vehicle .status {
+    font-weight: bold;
+    color: #00b894; /* Green for active status */
+}
+
+.vehicle .status.inactive {
+    color: #e74c3c; /* Red for inactive status */
+}
+{% endblock style %}
+
+{% block content %}
+
+<section class="Background">
+    <div class="bg-content">
+        <h1>VEHICLE<br>TRACKING</h1>
+        <p>“Track your fleet in real-time with TrashTrack. See where <br>each vehicle is currently located and monitor the number <br>of vehicles with active running status. Get detailed insights on<br> vehicle performance and optimize fleet management <br> with up-to-date information at your fingertips!”</p>
+    </div>
+</section>
+<section>
+    <h1>All Vehicles</h1>
+    <div class="vehicle-list">
+        {% for vehicle in vehicles %}
+        <div class="vehicle">
+            <h3>Vehicle ID: {{ vehicle.vehicle_id }}</h3>
+            <p>Location: {{ vehicle.location }}</p>
+            <p>Status: <span class="status {% if vehicle.status == 'Inactive' %}inactive{% endif %}">{{ vehicle.status }}</span></p>
+            <p>Last Updated: {{ vehicle.last_updated }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock content %}

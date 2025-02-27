@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Dumping Area{% endblock title %}
+
+{% block style %}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+
+.Background {
+    height: 50vh;
+    background-image: url("https://www.guardforce.com.hk/media/images/news/smart%20bin%20collection%20v2-01_1600x864.jpg"); /* Replace with actual image path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.Background h1 {
+    font-family: "Poppins", sans-serif;
+    color: rgb(255, 255, 255);
+    font-size: 5rem;
+    font-weight: 700;
+    margin-right: 5%;
+    text-align: right;
+}
+
+.Background p {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0;
+    line-height: 1.5; /* Better spacing between lines */
+    text-align: center;
+    text-align-last: justify;
+    margin-right: 30%;
+    background-color: #ffffff4b ;
+    border-radius: 50px 0px 50px 0px;
+    padding: 4%;/* Align the paragraph text to the left */
+}
+
+.bg-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns for H1 and P */
+    gap: 20px; /* Space between the columns */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    max-width: 90%; /* Limit the width of the content */
+    width: 100%; /* Ensure content spans full width */
+}
+
+.Background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.67); /* Dark overlay */
+    z-index: 0;
+  }
+  
+h1, h2 {
+    text-align: center;
+    color: #2d6a4f; /* Green color for titles */
+    margin-bottom: 20px;
+}
+
+.waste-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two cards per row */
+    gap: 20px;
+    padding: 30px;
+}
+
+.waste-type {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.waste-type:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+}
+
+.waste-type h3 {
+    font-size: 1.5rem;
+    color: #2d6a4f; /* Green color for waste type titles */
+    margin-bottom: 10px;
+}
+
+.waste-type p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+{% endblock style %}
+
+{% block content %}
+
+<section class="Background">
+    <div class="bg-content">
+        <h1>WASTE<br>COLLECTION</h1>
+        <p>“Monitor waste types in real-time with <br>our advanced dumping area dashboard. View detailed <br>data for various waste categories, including quantity <br>and last updated information. Analyze trends, streamline <br>collection processes, and ensure efficient disposal <br>management. Stay informed with categorized insights <br>to optimize sustainability efforts and meet regulatory <br>compliance seamlessly”</p>
+    </div>
+</section>
+<section>
+    <h1>Waste Types in Dumping Area</h1>
+
+    <div class="waste-list">
+        {% for waste_type in waste_types %}
+        <div class="waste-type">
+            <h3>{{ waste_type.waste_type }}</h3>
+            <p>Quantity: {{ waste_type.quantity }} kg</p>
+            <p>Last Updated: {{ waste_type.last_updated }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock content %}

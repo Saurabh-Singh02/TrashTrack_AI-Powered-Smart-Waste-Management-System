@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}TrashTrack | Signup{% endblock title %}
+
+{% block style %}
+.signup-container {
+    padding-top: 3%;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+}
+
+.signup-container h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #4CAF50;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.signup-container form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px; /* Same width as Login Form */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.signup-container .form-group {
+    position: relative;
+    width: 100%;
+}
+
+.signup-container .form-group input {
+    padding: 12px;
+    padding-left: 45px; /* Space for icon inside */
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.signup-container .form-group .input-icon {
+    position: absolute;
+    left: 15px;
+    top: 65%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #aaa;
+}
+
+.signup-container form input::placeholder {
+    font-size: 1rem;
+    color: #aaa;
+}
+
+.signup-container form input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.signup-container form button {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.signup-container form button:hover {
+    background-color: #45a049;
+}
+
+.signup-container .login-link {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.signup-container .login-link a {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.signup-container .login-link a:hover {
+    text-decoration: underline;
+}
+
+.signup-container .error-message {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    text-align: center;
+}
+{% endblock style %}
+
+{% block content %}
+<section>
+<div class="signup-container">
+    <h2>Login Now</h2>
+
+    {% if form.errors %}
+    <div class="error-message">
+        <ul>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <li>{{ field|title }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+        <label for="username">Username:</label>
+        <i class="fas fa-user input-icon"></i>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required>
+    </div>
+    
+
+        <div class="form-group">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" name="password" id="{{ form.password.id_for_label }}" placeholder="Enter password" required>
+            {{ form.password }}
+        </div>
+
+
+        <button type="submit">Login</button>
+
+        <p class="login-link">
+            Already have an account? <a href="{% url 'company_signup' %}">Signup</a>
+        </p>
+    </form>
+</div>
+</section>
+{% endblock content %}

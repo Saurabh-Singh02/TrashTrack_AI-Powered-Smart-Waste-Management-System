@@ -1,0 +1,227 @@
+{% extends "base.html" %} 
+{% block title %}Bin Monitoring{% endblock title %}
+
+{% block style %}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.Background {
+    height: 50vh;
+    background-image: url("https://www.guardforce.com.hk/media/images/news/smart%20bin%20collection%20v2-01_1600x864.jpg"); /* Replace with actual image path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.Background h1 {
+    font-family: "Poppins", sans-serif;
+    color: rgb(255, 255, 255);
+    font-size: 5rem;
+    font-weight: 700;
+    margin-right: 5%;
+    text-align: right; /* Align the heading to the left */
+}
+
+.Background p {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0;
+    line-height: 1.5; /* Better spacing between lines */
+    text-align: center;
+    text-align-last: justify;
+    margin-right: 30%;
+    background-color: #ffffff4b ;
+    border-radius: 50px 0px 50px 0px;
+    padding: 4%;/* Align the paragraph text to the left */
+}
+
+.bg-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns for H1 and P */
+    gap: 20px; /* Space between the columns */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    max-width: 90%; /* Limit the width of the content */
+    width: 100%; /* Ensure content spans full width */
+}
+
+
+.Background a {
+    display: inline-block;
+    text-decoration: none;
+    background-color: #2d6a4f; /* Button color */
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.Background a:hover {
+    background-color: #1e4c34; /* Darker green on hover */
+}
+
+.Background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.67); /* Dark overlay */
+  z-index: 0;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #2d6a4f;
+    margin-bottom: 20px;
+}
+
+.bins-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 30px;
+}
+
+.bin-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.bin-card:hover {
+    transform: translateY(-5px);
+}
+
+.bin-card h3 {
+    font-size: 1.5rem;
+    color: #2d6a4f;
+    margin-bottom: 10px;
+}
+
+.bin-card p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.circular-progress {
+    position: relative;
+    height: 120px;
+    width: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#00b894 0deg, #ededed 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.circular-progress::before {
+    content: "";
+    position: absolute;
+    height: 110px;
+    width: 110px;
+    border-radius: 50%;
+    background-color: #fff;
+}
+
+.progress-value {
+    position: relative;
+    font-size: 2rem;
+    font-weight: 600;
+    color: #2d6a4f;
+    z-index: 1;
+}
+
+.text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #555;
+}
+
+{% endblock style %}
+
+{% block content %}
+<section class="Background">
+    <div class="bg-content">
+        <h1>SMART BINS<br>MONITORING</h1>
+        <p>“Easily track real-time waste bin levels with <br> our interactive dashboard. View color-coded statuses <br>(Green: Empty, Yellow: Half-Full, Red: Full) and receive <br>instant notifications for full bins. Access detailed bin <br>information, including location and status, to streamline <br>waste collection and ensure efficient management.”</p>
+    </div>
+</section>
+
+<section>
+    <h1>All Smart Bins</h1>
+    <div class="bins-list">
+        {% for bin in bins %}
+        <div class="bin-card {% if bin.current_fill_level > 76 %}highlight{% endif %}">
+            <h3>Bin Type: {{ bin.bin_type }} Bin</h3>
+            <p>Location: {{ bin.location }}</p>
+            <div class="container">
+                <div class="circular-progress" data-fill="{{ bin.current_fill_level }}">
+                    <span class="progress-value">0%</span>
+                </div>
+                <span class="text">Current Fill Level</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<script>
+  // Select all bin cards with circular progress elements
+  const binCards = document.querySelectorAll(".bin-card");
+
+  binCards.forEach(binCard => {
+    const circularProgress = binCard.querySelector(".circular-progress");
+    const progressValue = binCard.querySelector(".progress-value");
+    const fillLevel = parseInt(circularProgress.getAttribute("data-fill"));
+
+    let progressStartValue = 0;
+    const speed = 20; // Animation speed
+
+    const getColor = (value) => {
+      if (value > 76) {
+        return "#e74c3c"; // Red
+      } else if (value > 50) {
+        return "#f1c40f"; // Yellow
+      } else {
+        return "#00b894"; // Green
+      }
+    };
+
+    const progress = setInterval(() => {
+      progressStartValue++;
+      progressValue.textContent = `${progressStartValue}%`;
+      const color = getColor(progressStartValue);
+      circularProgress.style.background = `conic-gradient(${color} ${progressStartValue * 3.6}deg, #ededed 0deg)`;
+
+      if (progressStartValue === fillLevel) {
+        clearInterval(progress);
+      }
+    }, speed);
+  });
+</script>
+{% endblock content %}

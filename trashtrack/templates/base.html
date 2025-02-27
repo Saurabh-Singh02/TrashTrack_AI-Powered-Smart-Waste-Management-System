@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% block head %}{% endblock head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrashTrack | {% block title %}{% endblock title %}</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{% static "css/stylee.css" %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&family=Orbitron:wght@400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Rowdies:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        .content-container {
+            min-height: 70vh;
+        }
+        .notification-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 20px;
+        }
+
+        .notification-icon {
+            text-decoration: none;
+            color: #000;
+            font-size: 1.5rem;
+            position: relative;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: 2px;
+            right: -1px;
+            background-color: red;
+            color: white;
+            font-size: 0.3rem;
+            font-weight: bold;
+            border-radius: 50%;
+            padding: 3px 6px;
+        }
+        .auth-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        {% block style %}{% endblock style %}
+    </style>
+</head>
+<body>
+
+   <!-- Navbar -->
+   <nav class="navbar">
+    <div class="logo">TRASHTRACK</div>
+    <ul class="nav-links">
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'dashboard' %}">Home</a></li>
+        <li><a href="{% url 'smart_bins' %}">Bin Monitoring</a></li>
+        <li><a href="{% url 'tracking' %}">Tracking</a></li>
+        <li><a href="{% url 'dumping_area' %}">Dumping Area</a></li>
+        <li><a href="{% url 'company_portal' %}">Company Portal</a></li>
+        <li><a href="{% url 'map_view' %}">Bin Map</a></li>
+        <li><a target="_blank" href="{% url 'admin:login' %}">Admin</a></li>
+        {% endif %}
+    </ul>
+    
+    <div class="auth-links">
+        <div class="notification-container">
+            {% if user.is_authenticated %}
+                <a href="{% url 'smart_bins' %}" class="notification-icon">
+                    <span class="material-icons">notifications</span>
+                    {% if bin_notifications %}
+                        <span class="notification-count">{{ bin_notifications|length }}</span>
+                    {% endif %}
+                </a>
+            {% endif %}
+        </div>
+        {% if user.is_authenticated %}
+        <div id="cont"><a id="cont" href="{% url "logout" %}">Logout</a></div>
+        {% else %}
+        {% comment %} <div id="cont"><a id="cont" href="{% url "login" %}">login</a></div> {% endcomment %}
+        {% endif %}
+    </div>
+</nav>
+   <div class="content-container">
+       {% block content %}{% endblock content %}
+   </div>
+
+   <!-- Footer -->
+   {% if user.is_authenticated %}
+   <footer class="f1">
+       <div class="info">
+           <h4 class="logo">TRASH <br> TRACK</h4>
+           <div class="line">.</div>
+           <h4 class="h4">Trashtack optimizes waste management <br>with real-time data, reducing emissions <br>and supporting greener communities.</h4>
+       </div>
+       <div class="srl">
+           <h3>TT SRL</h3>
+           <h4>Via Lunga, 51/B <br> 25126 Brescia (BS) <br> Italy</h4>
+       </div>
+       <div class="llc">
+           <h3>TT MONITORING LLC</h3>
+           <h4>400 SR 434, Ste. <br>1024, Oviedo, FL 32765 <br> USA</h4>
+       </div>
+   </footer>
+
+   <footer class="f2">
+       <ul class="fnav">
+           <li><a href="">Support</a></li>
+           <li><a href="">Contact</a></li>
+           <li><a href="">Privacy Policy</a></li>
+           <li><a href="">Cookie Policy</a></li>
+       </ul>
+   </footer>
+
+   <footer>
+       <p>&copy; 2024 trashtrack. All Rights Reserved.</p>
+   </footer>
+   {% endif %}
+   <script src="https://kit.fontawesome.com/f8e1a90484.js" crossorigin="anonymous"></script>
+</body>
+</html>

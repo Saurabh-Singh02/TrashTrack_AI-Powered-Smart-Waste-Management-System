@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load static %}  <!-- Load the static template tag -->
+{% block title %}Home{% endblock title %}
+{% block content %}
+
+    <!-- Hero Section -->
+    <section class="Background">
+        <video autoplay loop muted plays-inline class="back-video">
+            <source src="{% static 'home_vid.mp4' %}" type="video/mp4">  <!-- Update video source -->
+        </video>
+        <div class="bg-content">
+            <h1>SMART WASTE MANAGEMENT SYSTEM</h1>
+            <p>“Redefining Waste with Intelligence, for a Cleaner, Greener World”</p>
+            <a href="{% static 'trashtrack_SmartWasteManagementSystem.pdf' %}" target="_blank" class="btn">click here</a>        </div>
+        <img src="{% static 'pattern.png' %}" alt="">  <!-- Update image source -->
+        <img class="P2" src="{% static 'pattern.png' %}" alt="">  <!-- Update image source -->
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about">
+        <h2>More than 400 tons CO2 saved with</h2>
+    </section>
+
+    <section class="Section2">
+        <div class="container">
+            <h2>TRASHTRACK</h2>
+            <p>
+                "Trashtack is an innovative waste management and monitoring platform designed to <br> transform waste collection and transportation through data-driven insights and <br> predictive analytics. By utilizing real-time data and smart forecasting, Trashtack <br>
+                helps you achieve sustainability goals, lower carbon emissions, and minimize <br>environmental impact—empowering cities and businesses to create cleaner, greener <br>communities."
+            </p>
+            <img src="{% static 'aboutimg.png' %}" alt="">  <!-- Update image source -->
+            <!--<a href="#">View More</a>-->
+        </div>
+        <div class="info">
+            <h2>WE ARE COLLECTING THE<br> WASTE SMARTLY TO MAKE <br>FUTURE GREEN!</h2>
+        </div>
+        <div class="bins">
+            <div class="green">
+                <h2>Smart Bins</h2>
+            </div>
+            <img src="{% static 'bins.png' %}" alt="">  <!-- Update image source -->
+            <div class="text">
+                <p>We provide advanced smart bins designed for efficient waste management.<br> These bins are equipped with sensors to monitor real-time waste levels<br> and segregate different types of waste automatically. Updates are sent<br> to our centralized platform, ensuring timely collection and proper disposal. Our <br>smart bins help reduce overflow, minimize pollution, and support sustainability <br>goals, making them the perfect solution for cleaner, smarter communities.</p>
+            </div>
+        </div>
+        <div class="tracking">
+            <div class="text">
+                <p>We provide a live tracking system for waste bins to ensure efficient waste <br>management. This system monitors real-time bin fill levels using advanced sensors <br>and displays updates on our centralized platform. Notifications are sent instantly when<br>  bins reach predefined thresholds, ensuring timely collection and preventing <br>overflows. Our live tracking solution helps optimize routes, reduce costs, <br>and support sustainability goals, making waste collection smarter and more effective.</p>
+            </div>
+            <img src="{% static 'map.png' %}" alt="">  <!-- Update image source -->
+            <div class="green">
+                <h2>Bin<br>Monitoring</h2>
+            </div>
+        </div>
+        <div class="reusability">
+            <div class="green">
+                <h2>Route <br> Optimization</h2>
+            </div>
+            <img src="{% static 'veh.png' %}" alt="">  <!-- Update image source -->
+            <div class="text">
+                <p>We provide a route optimization system for garbage trucks to enhance efficiency.<br> This system uses real-time data to determine the shortest and most effective routes<br> for waste collection, minimizing travel time and fuel consumption. It also tracks<br> the current location of vehicles, ensuring smooth operations and better coordination.<br> Our route optimization solution helps reduce costs, improve productivity, and<br> support sustainability goals, making waste management smarter and more streamlined.</p>
+            </div>
+        </div>
+    </section>
+    <section class="section3">
+        <h2>WE CAN HELP YOUR<br>COMPANY TO</h2>
+        <div class="money">
+            <h3>Save Money</h3>
+            <h4>Saving up to 40% <br> on logistics costs</h4>
+        </div>
+        <div class="time">
+            <h3>Save Time</h3>
+            <h4>Simplifying your daily <br> activities</h4>
+        </div>
+        <div class="carbon">
+            <h3>Reduce your carbon <br>footprint</h3>
+            <h4>Lowering CO2 emissions <br> up to 30%</h4>
+        </div>
+    </section>
+    
+    <section class="section4">
+        <div class="explore"> 
+            <h2>EXPLORE</h2>
+            <div class="Ecard">
+                <!-- Row 1 -->
+                <div class="cardd cardd1">
+                    <div class="cdd1"><h3>Smart Bin</h3>
+                    <a href="{% static 'smart_bins' %}" class="button">Click here</a>
+                    </div>
+                </div>
+                <div class="cardd cardd2">
+                    <div class="cdd1"><h3>Route Optimization</h3>
+                    <a href="{% url "tracking" %}" class="button">Click here</a>
+                </div>
+                </div>
+            </div>
+            
+            <div class="Ecard">
+                <!-- Row 2 -->
+                <div class="cardd cardd3">
+                    <div class="cdd1"><h3>Real-Time Monitoring</h3>
+                    <a href="{% static 'smart_bins' %}" class="button">Click here</a>
+                </div>
+                </div>
+                <div class="cardd cardd4">
+                    <div class="cdd1"><h3>Analytics and Reporting</h3>
+                    <a href="{% static 'dumping_area' %}" class="button">Click here</a>
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+        </div>
+        
+        <div class="review">
+            <h2>REVIEW</h2>
+            <div class="line">.</div>
+            <div class="card">
+                <div class="card1">
+                    <div class="text">
+                        <h3>"The route optimization and live <br>tracking features on TrashTrack <br>have greatly improved our waste <br>collection process. It's super <br>convenient!"</h3>
+                    </div>
+                    <div class="user">
+                        <h3>Abhishek Sharma</h3>
+                    </div>
+                </div>
+                <div class="card2">
+                    <div class="text">
+                        <h3>"TrashTrack has made waste <br>management so much easier with <br>real-time monitoring and instant <br>notifications. The website is user-friendly!"</h3>
+                    </div>
+                    <div class="user">
+                        <h3>Saurabh Singh</h3>
+                    </div>
+                </div>
+                <div class="card3">
+                    <div class="text">
+                        <h3>"Tracking bin fill levels and <br>receiving alerts is a breeze. TrashTrack <br>makes waste collection more efficient<br> and smarter!" Really like this <br> website!</h3>
+                    </div>
+                    <div class="user"><h3>Rishabh Sharma</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="subscribe">
+        <h2>Stay up to <br>date with</h2>
+        <h1>TRASHTRACK</h1>
+        
+        <div class="sub"><a href="#">SUBSCRIBE</a></div>
+    </section>
+
+{% endblock content %}

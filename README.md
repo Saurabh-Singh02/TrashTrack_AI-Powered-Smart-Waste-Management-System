@@ -23,5 +23,13 @@ TrashTrack/
 │──requirements.txt <br>
 README.md # Project guide
 
+## 🧠 ML Model Download
+
+To run the smart waste classification system, download the pre-trained machine learning model from the link below:
+
+📥 [Download ML Model](https://drive.google.com/file/d/1hnEvu1vdTLwtfAP_vf0Uydj9EltQRB78/view?usp=drive_link)
+
+
+
 
  

@@ -12,24 +12,57 @@ TrashTrack is an AI-powered **smart bin system** designed to efficiently manage 
 - 🔧 **Admin Panel**: Manual data management.
 
 ## 📂 Project Structure
-TrashTrack/ 
-│── mainapp/ ## app <br>
-│── static/ <br>
-│── templates/ <br>
-│── trashtrack/ ##Project <br>
-│── requirements.txt # Python dependencies <br>
-│── db.sqlite3 <br>
-│──manage.py <br>
-│──requirements.txt <br>
-README.md # Project guide
+```
+TrashTrack/
+│── mainapp/          # Core Django app
+│── static/           # Static files
+│── templates/        # HTML templates
+│── trashtrack/       # Django project settings
+│── db.sqlite3        # Database file
+│── manage.py         # Django management script
+│── requirements.txt  # Python dependencies
+README.md             # Project guide
+```
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Create a Virtual Environment
+```bash
+python -m venv venv
+```
+
+### 2️⃣ Activate the Virtual Environment
+
+- **On Windows:**
+```bash
+venv\Scripts\activate
+```
+
+- **On macOS/Linux:**
+```bash
+source venv/bin/activate
+```
+
+### 3️⃣ Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4️⃣ Run Migrations
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### 5️⃣ Run the Development Server
+```bash
+python manage.py runserver
+```
+
+The app will be live at: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ## 🧠 ML Model Download
 
 To run the smart waste classification system, download the pre-trained machine learning model from the link below:
 
 📥 [Download ML Model](https://drive.google.com/file/d/1hnEvu1vdTLwtfAP_vf0Uydj9EltQRB78/view?usp=drive_link)
-
-
-
-
- 

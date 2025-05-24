@@ -3,52 +3,1203 @@
 {% load static %}    
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css" />
 <style>
     #map {
         height: 70vh;
         width: 100%;
+        min-height: 400px; /* Ensure map has minimum height on small screens */
+    }
+    
+    .legend {
+        padding: 10px;
+        background: white;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        line-height: 1.5;
+        font-size: 0.8rem; /* Smaller font for mobile */
+        max-width: 200px; /* Prevent legend from being too wide */
+    }
+    
+    .legend i {
+        width: 16px;
+        height: 16px;
+        float: left;
+        margin-right: 6px;
+        opacity: 0.7;
+    }
+    
+    .legend h4 {
+        margin: 0 0 5px;
+        color: #555;
+        font-size: 0.9rem;
+    }
+    
+    .route-controls {
+        position: absolute;
+        top: 100px; /* Lower position for mobile */
+        right: 10px;
+        z-index: 1000;
+        background: white;
+        padding: 8px;
+        border-radius: 5px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        max-width: 150px; /* Prevent controls from being too wide */
+    }
+    
+    .route-controls button {
+        margin: 3px 0;
+        padding: 5px 8px;
+        font-size: 0.8rem;
+        width: 100%; /* Full width buttons on mobile */
+    }
+    
+    /* Custom routing line style */
+    .custom-route {
+        stroke: #0066ff;
+        stroke-width: 5;
+        stroke-opacity: 0.7;
+        fill: none;
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+        .legend {
+            font-size: 1rem;
+            padding: 12px;
+            max-width: 220px;
+        }
+        
+        .legend i {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+        }
+        
+        .legend h4 {
+            font-size: 1rem;
+        }
+        
+        .route-controls {
+            top: 400px;
+            padding: 10px;
+            max-width: none;
+        }
+        
+        .route-controls button {
+            margin: 5px 0;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+    }
+
+    /* Extra small devices (phones, 600px and down) */
+    @media (max-width: 600px) {
+        #map {
+            height: 60vh; /* Slightly smaller on very small screens */
+        }
+        
+        .route-controls {
+            top: 80px;
+            right: 5px;
+            padding: 5px;
+        }
+        
+        .route-controls button {
+            padding: 4px 6px;
+            font-size: 0.7rem;
+        }
     }
 </style>
 {% endblock head %}
 
-{% block title %}Map{% endblock title %}
+{% block title %}University Waste Collection Route Optimization{% endblock title %}
 
 {% block content %}
 <section class="map_view">
-    <h1>Bin Locations Map</h1>
+    <h1>University Waste Collection Route Optimization</h1>
     <div id="map"></div>
+    <div class="route-controls">
+        <button id="optimize-route">Optimize Collection Route</button>
+        <button id="clear-route">Clear Route</button>
+        <div id="route-stats" style="margin-top: 10px; font-size: 12px;"></div>
+    </div>
 </section>
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js"></script>
 <script>
-    // Initialize map and set default view
-    var map = L.map('map').setView([28.3513, 76.1199], 10);
+    // Initialize map
+    var map = L.map('map').setView([28.358107, 76.144939], 15);
+    map.addControl(new L.Control.Fullscreen());
 
-    // Default tile layer: OpenStreetMap
-    var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,  // Limit max zoom to 18 or lower
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    // Satellite tile layer: OpenStreetMap with Satellite (Esri)
-    var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 18,  // Limit max zoom to 16 or whatever zoom level you find appropriate
+    // Add satellite layer as base
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
         attribution: '&copy; <a href="https://www.esri.com/en-us/arcgis/products/arcgis-online/overview">Esri</a> contributors'
-    });
-
-
-    // Add a layer control to switch between layers
-    L.control.layers({
-        "Default": osmLayer,
-        "Satellite": satelliteLayer,
     }).addTo(map);
 
-    // Add markers for each bin
+    // Variables for route management
+    var collectionBins = [];
+    var routeMarkers = [];
+    var customRoute = null;
+    var pathwayNetwork = [];
+
+    // Helper function to calculate distance between two points (in meters)
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371000; // Earth radius in meters
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lng2-lng1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c;
+    }
+
+    // Custom university pathway network
+    function initializePathways() {
+        return {
+            nodes: [
+                {id: 1, lat: 28.361370, lng: 76.147385, name: "Point 1"},
+                {id: 2, lat: 28.360741, lng: 76.147353, name: "Point 2"},
+                {id: 3, lat: 28.360742, lng: 76.145928, name: "Point 3"},
+                {id: 4, lat: 28.360680, lng: 76.144763, name: "Point 4"},
+                {id: 5, lat: 28.360047, lng: 76.144796, name: "Point 5"},
+                {id: 6, lat: 28.360064, lng: 76.145944, name: "Point 6"},
+                {id: 7, lat: 28.360064, lng: 76.146930, name: "Point 7"},
+                {id: 8, lat: 28.359415, lng: 76.147374, name: "Point 8"},
+                {id: 9, lat: 28.359395, lng: 76.145941, name: "Point 9"},
+                {id: 10, lat: 28.359392, lng: 76.144805, name: "Point 10"},
+                {id: 11, lat: 28.359366, lng: 76.144304, name: "Point 11"},
+                {id: 12, lat: 28.358516, lng: 76.144337, name: "Point 12"},
+                {id: 13, lat: 28.358513, lng: 76.145549, name: "Point 13"},
+                {id: 14, lat: 28.357821, lng: 76.145560, name: "Point 14"},
+                {id: 15, lat: 28.357791, lng: 76.144332, name: "Point 15"},
+                {id: 16, lat: 28.357855, lng: 76.147511, name: "Point 16"},
+                {id: 17, lat: 28.357830, lng: 76.150084, name: "Point 17"},
+                {id: 18, lat: 28.357781, lng: 76.151999, name: "Point 18"},
+                {id: 19, lat: 28.355140, lng: 76.152089, name: "Point 19"},
+                {id: 20, lat: 28.351770, lng: 76.152084, name: "Point 20"},
+                {id: 21, lat: 28.351778, lng: 76.148409, name: "Point 21"},
+                {id: 22, lat: 28.354192, lng: 76.148407, name: "Point 22"},
+                {id: 23, lat: 28.355107, lng: 76.148407, name: "Point 23"},
+                {id: 24, lat: 28.355118, lng: 76.147585, name: "Point 24"},
+                {id: 25, lat: 28.351724, lng: 76.147247, name: "Point 25"},
+                {id: 26, lat: 28.352639, lng: 76.137619, name: "Point 26"},
+                {id: 27, lat: 28.352630, lng: 76.132837, name: "Point 27"},
+                {id: 28, lat: 28.351320, lng: 76.132805, name: "Point 28"},
+                {id: 29, lat: 28.351552, lng: 76.130869, name: "Point 29"}
+            ],
+            edges: [
+                {
+                    from: 1,
+                    to: 2,
+                    weight: calculateDistance(28.361370, 76.147385, 28.360741, 76.147353),
+                    path: [
+                        [28.361093, 76.147471],
+                        [28.360741, 76.147353]
+                    ]
+                },
+                {
+                    from: 2,
+                    to: 3,
+                    weight: calculateDistance(28.360741, 76.147353, 28.360742, 76.145928),
+                    path: [
+                        [28.360741, 76.147353],
+                        [28.360732, 76.146919],
+                        [28.360742, 76.145928]
+                    ]
+                },
+                {
+                    from: 3,
+                    to: 4,
+                    weight: calculateDistance(28.360742, 76.145928, 28.360680, 76.144763),
+                    path: [
+                        [28.360742, 76.145928],
+                        [28.360680, 76.144763]
+                    ]
+                },
+                {
+                    from: 4,
+                    to: 5,
+                    weight: calculateDistance(28.360680, 76.144763, 28.360047, 76.144796),
+                    path: [
+                        [28.360680, 76.144763],
+                        [28.360047, 76.144796]
+                    ]
+                },
+                {
+                    from: 5,
+                    to: 6,
+                    weight: calculateDistance(28.360047, 76.144796, 28.360064, 76.145944),
+                    path: [
+                        [28.360047, 76.144796],
+                        [28.360064, 76.145944]
+                    ]
+                },
+                {
+                    from: 6,
+                    to: 7,
+                    weight: calculateDistance(28.360064, 76.145944, 28.360064, 76.146930),
+                    path: [
+                        [28.360064, 76.145944],
+                        [28.360064, 76.146930]
+                    ]
+                },
+                {
+                    from: 7,
+                    to: 8,
+                    weight: calculateDistance(28.360064, 76.146930, 28.359415, 76.147374),
+                    path: [
+                        [28.360064, 76.146930],
+                        [28.359401, 76.146934],
+                        [28.359415, 76.147374]
+                    ]
+                },
+                {
+                    from: 8,
+                    to: 9,
+                    weight: calculateDistance(28.359415, 76.147374, 28.359395, 76.145941),
+                    path: [
+                        [28.359415, 76.147374],
+                        [28.359395, 76.145941]
+                    ]
+                },
+                {
+                    from: 9,
+                    to: 10,
+                    weight: calculateDistance(28.359395, 76.145941, 28.359392, 76.144805),
+                    path: [
+                        [28.359395, 76.145941],
+                        [28.359392, 76.144805]
+                    ]
+                },
+                {
+                    from: 10,
+                    to: 11,
+                    weight: calculateDistance(28.359392, 76.144805, 28.359366, 76.144304),
+                    path: [
+                        [28.359392, 76.144805],
+                        [28.359366, 76.144304]
+                    ]
+                },
+                {
+                    from: 11,
+                    to: 12,
+                    weight: calculateDistance(28.359366, 76.144304, 28.358516, 76.144337),
+                    path: [
+                        [28.359366, 76.144304],
+                        [28.358516, 76.144337]
+                    ]
+                },
+                {
+                    from: 12,
+                    to: 13,
+                    weight: calculateDistance(28.358516, 76.144337, 28.358513, 76.145549),
+                    path: [
+                        [28.358516, 76.144337],
+                        [28.358513, 76.145549]
+                    ]
+                },
+                {
+                    from: 13,
+                    to: 14,
+                    weight: calculateDistance(28.358513, 76.145549, 28.357821, 76.145560),
+                    path: [
+                        [28.358513, 76.145549],
+                        [28.357821, 76.145560]
+                    ]
+                },
+                {
+                    from: 14,
+                    to: 15,
+                    weight: calculateDistance(28.357821, 76.145560, 28.357791, 76.144332),
+                    path: [
+                        [28.357821, 76.145560],
+                        [28.357791, 76.144332]
+                    ]
+                },
+                {
+                    from: 15,
+                    to: 16,
+                    weight: calculateDistance(28.357791, 76.144332, 28.357855, 76.147511),
+                    path: [
+                        [28.357791, 76.144332],
+                        [28.357855, 76.147511]
+                    ]
+                },
+                {
+                    from: 16,
+                    to: 17,
+                    weight: calculateDistance(28.357855, 76.147511, 28.357830, 76.150084),
+                    path: [
+                        [28.357855, 76.147511],
+                        [28.357830, 76.150084]
+                    ]
+                },
+                {
+                    from: 17,
+                    to: 18,
+                    weight: calculateDistance(28.357830, 76.150084, 28.357781, 76.151999),
+                    path: [
+                        [28.357830, 76.150084],
+                        [28.357781, 76.151999]
+                    ]
+                },
+                {
+                    from: 18,
+                    to: 19,
+                    weight: calculateDistance(28.357781, 76.151999, 28.355140, 76.152089),
+                    path: [
+                        [28.357781, 76.151999],
+                        [28.355140, 76.152089]
+                    ]
+                },
+                {
+                    from: 19,
+                    to: 20,
+                    weight: calculateDistance(28.355140, 76.152089, 28.351770, 76.152084),
+                    path: [
+                        [28.355140, 76.152089],
+                        [28.351770, 76.152084]
+                    ]
+                },
+                {
+                    from: 20,
+                    to: 21,
+                    weight: calculateDistance(28.351770, 76.152084, 28.351778, 76.148409),
+                    path: [
+                        [28.351770, 76.152084],
+                        [28.351778, 76.148409]
+                    ]
+                },
+                {
+                    from: 21,
+                    to: 22,
+                    weight: calculateDistance(28.351778, 76.148409, 28.354192, 76.148407),
+                    path: [
+                        [28.351778, 76.148409],
+                        [28.354192, 76.148407]
+                    ]
+                },
+                {
+                    from: 22,
+                    to: 23,
+                    weight: calculateDistance(28.354192, 76.148407, 28.355107, 76.148407),
+                    path: [
+                        [28.354192, 76.148407],
+                        [28.354458, 76.148387],
+                        [28.354472, 76.148],
+                        [28.354488, 76.148384],
+                        [28.355107, 76.148407]
+                    ]
+                },
+                {
+                    from: 23,
+                    to: 24,
+                    weight: calculateDistance(28.355107, 76.148407, 28.355118, 76.147585),
+                    path: [
+                        [28.355107, 76.148407],
+                        [28.355118, 76.147585]
+                    ]
+                },
+                {
+                    from: 24,
+                    to: 25,
+                    weight: calculateDistance(28.355118, 76.147585, 28.351750, 76.147206),
+                    path: [
+                        [28.355118, 76.147585],
+                        [28.352116, 76.147603],
+                        [28.351750, 76.147206]
+                        ]
+                    },
+                    {
+                        from: 25,
+                        to: 26,
+                        weight: calculateDistance(28.351750, 76.147206, 28.352639, 76.137619),
+                        path: [
+                        [28.351750, 76.147206],
+                        [28.352281, 76.145442],
+                        [28.352635, 76.137685],
+                        [28.352175, 76.137139],
+                        [28.352639, 76.137619]
+                    ]
+                },
+                {
+                    from: 26,
+                    to: 27,
+                    weight: calculateDistance(28.352639, 76.137619, 28.352630, 76.132837),
+                    path: [
+                        [28.352639, 76.137619],
+                        [28.352630, 76.132837]
+                    ]
+                },
+                {
+                    from: 27,
+                    to: 28,
+                    weight: calculateDistance(28.352630, 76.132837, 28.351530, 76.132696),
+                    path: [
+                        [28.352630, 76.132837],
+                        [28.351530, 76.132696]
+                    ]
+                },
+                {
+                    from: 28,
+                    to: 29,
+                    weight: calculateDistance(28.351530, 76.132696, 28.351552, 76.130869),
+                    path: [
+                        [28.351530, 76.132696],
+                        [28.351298, 76.132875],
+                        [28.351121, 76.132613],
+                        [28.351355, 76.132392],
+                        [28.351556, 76.130911],
+                        [28.351694, 76.13056]
+                    ]
+                },
+                {
+                    from: 8,
+                    to: 16,
+                    weight: calculateDistance(28.359415, 76.147374, 28.357855, 76.147511),
+                    path: [
+                        [28.359415, 76.147374],
+                        [28.357855, 76.147511]
+                    ]
+                },
+                {
+                    from: 2,
+                    to: 8,
+                    weight: calculateDistance(28.360741, 76.147353, 28.359415, 76.147374),
+                    path: [
+                        [28.360741, 76.147353],
+                        [28.359415, 76.147374]
+                    ]
+                },
+                {
+                    from: 3,
+                    to: 6,
+                    weight: calculateDistance(28.360742, 76.145928, 28.360064, 76.145944),
+                    path: [
+                        [28.360742, 76.145928],
+                        [28.360064, 76.145944]
+                    ]
+                },
+                {
+                    from: 3,
+                    to: 6,
+                    weight: calculateDistance(28.360064, 76.145944, 28.359395, 76.145941),
+                    path: [
+                    [28.360064, 76.145944],
+                    [28.359395, 76.145941]
+                    ]
+                },
+                {
+                    from: 16,
+                    to: 24,
+                    weight: calculateDistance(28.357855, 76.147511, 28.355118, 76.147585),
+                    path: [
+                        [28.357855, 76.147511],
+                        [28.355118, 76.147585]
+                    ]
+                },
+                {
+                    from: 12,
+                    to: 15,
+                    weight: calculateDistance(28.358516, 76.144337, 28.357791, 76.144332),
+                    path: [
+                        [28.358516, 76.144337],
+                        [28.3580833, 76.14425],
+                        [28.357791, 76.144332]
+                    ]
+                },
+                {
+                    from: 21,
+                    to: 25,
+                    weight: calculateDistance(28.351778, 76.148409, 28.351750, 76.147206),
+                    path: [
+                        [28.351778, 76.148409],
+                        [28.351489, 76.147939],
+                        [28.3513611, 76.1473889],
+                        [28.351750, 76.147206]
+                    ]
+                },
+                {
+                    from: 19,
+                    to: 23,
+                    weight: calculateDistance(28.355140, 76.152089, 28.355107, 76.148407),
+                    path: [
+                        [28.355140, 76.152089],
+                        [28.355107, 76.148407]
+                    ]
+                },
+                // Add reverse edges for bidirectional movement
+                {
+                    from: 2,
+                    to: 1,
+                    weight: calculateDistance(28.360741, 76.147353, 28.361370, 76.147385),
+                    path: [
+                        [28.360741, 76.147353],
+                        [28.361093, 76.147471],
+                        [28.361370, 76.147385]
+                    ]
+                },
+                {
+                    from: 3,
+                    to: 2,
+                    weight: calculateDistance(28.360742, 76.145928, 28.360741, 76.147353),
+                    path: [
+                        [28.360742, 76.145928],
+                        [28.360741, 76.147353]
+                    ]
+                },
+                {
+                    from: 5,
+                    to: 10,
+                    weight: calculateDistance(28.360047, 76.144796, 28.359392, 76.144805),
+                    path: [
+                        [28.360047, 76.144796],
+                        [28.359392, 76.144805]
+                    ]
+                },
+                // Continue adding reverse edges for all pathways...
+                {
+                    from: 29,
+                    to: 28,
+                    weight: calculateDistance(28.351552, 76.130869, 28.351530, 76.132696),
+                    path: [
+                        [28.351694, 76.13056],
+                        [28.351556, 76.130911],
+                        [28.351355, 76.132392],
+                        [28.351530, 76.132696]
+                    ]
+                },
+                {
+        from: 4,
+        to: 3,
+        weight: calculateDistance(28.360680, 76.144763, 28.360742, 76.145928),
+        path: [
+            [28.360680, 76.144763],
+            [28.360742, 76.145928]
+        ]
+    },
+    {
+        from: 5,
+        to: 4,
+        weight: calculateDistance(28.360047, 76.144796, 28.360680, 76.144763),
+        path: [
+            [28.360047, 76.144796],
+            [28.360680, 76.144763]
+        ]
+    },
+    {
+        from: 6,
+        to: 5,
+        weight: calculateDistance(28.360064, 76.145944, 28.360047, 76.144796),
+        path: [
+            [28.360064, 76.145944],
+            [28.360047, 76.144796]
+        ]
+    },
+    {
+        from: 7,
+        to: 6,
+        weight: calculateDistance(28.360064, 76.146930, 28.360064, 76.145944),
+        path: [
+            [28.360064, 76.146930],
+            [28.360064, 76.145944]
+        ]
+    },
+    {
+        from: 8,
+        to: 7,
+        weight: calculateDistance(28.359415, 76.147374, 28.360064, 76.146930),
+        path: [
+            [28.359415, 76.147374],
+            [28.359401, 76.146934],
+            [28.360064, 76.146930]
+        ]
+    },
+    {
+        from: 9,
+        to: 8,
+        weight: calculateDistance(28.359395, 76.145941, 28.359415, 76.147374),
+        path: [
+            [28.359395, 76.145941],
+            [28.359415, 76.147374]
+        ]
+    },
+    {
+        from: 10,
+        to: 9,
+        weight: calculateDistance(28.359392, 76.144805, 28.359395, 76.145941),
+        path: [
+            [28.359392, 76.144805],
+            [28.359395, 76.145941]
+        ]
+    },
+    {
+        from: 11,
+        to: 10,
+        weight: calculateDistance(28.359366, 76.144304, 28.359392, 76.144805),
+        path: [
+            [28.359366, 76.144304],
+            [28.359392, 76.144805]
+        ]
+    },
+    {
+        from: 12,
+        to: 11,
+        weight: calculateDistance(28.358516, 76.144337, 28.359366, 76.144304),
+        path: [
+            [28.358516, 76.144337],
+            [28.359366, 76.144304]
+        ]
+    },
+    {
+        from: 13,
+        to: 12,
+        weight: calculateDistance(28.358513, 76.145549, 28.358516, 76.144337),
+        path: [
+            [28.358513, 76.145549],
+            [28.358516, 76.144337]
+        ]
+    },
+    {
+        from: 14,
+        to: 13,
+        weight: calculateDistance(28.357821, 76.145560, 28.358513, 76.145549),
+        path: [
+            [28.357821, 76.145560],
+            [28.358513, 76.145549]
+        ]
+    },
+    {
+        from: 15,
+        to: 14,
+        weight: calculateDistance(28.357791, 76.144332, 28.357821, 76.145560),
+        path: [
+            [28.357791, 76.144332],
+            [28.357821, 76.145560]
+        ]
+    },
+    {
+        from: 16,
+        to: 15,
+        weight: calculateDistance(28.357855, 76.147511, 28.357791, 76.144332),
+        path: [
+            [28.357855, 76.147511],
+            [28.357791, 76.144332]
+        ]
+    },
+    {
+        from: 17,
+        to: 16,
+        weight: calculateDistance(28.357830, 76.150084, 28.357855, 76.147511),
+        path: [
+            [28.357830, 76.150084],
+            [28.357855, 76.147511]
+        ]
+    },
+    {
+        from: 18,
+        to: 17,
+        weight: calculateDistance(28.357781, 76.151999, 28.357830, 76.150084),
+        path: [
+            [28.357781, 76.151999],
+            [28.357830, 76.150084]
+        ]
+    },
+    {
+        from: 19,
+        to: 18,
+        weight: calculateDistance(28.355140, 76.152089, 28.357781, 76.151999),
+        path: [
+            [28.355140, 76.152089],
+            [28.357781, 76.151999]
+        ]
+    },
+    {
+        from: 20,
+        to: 19,
+        weight: calculateDistance(28.351770, 76.152084, 28.355140, 76.152089),
+        path: [
+            [28.351770, 76.152084],
+            [28.355140, 76.152089]
+        ]
+    },
+    {
+        from: 21,
+        to: 20,
+        weight: calculateDistance(28.351778, 76.148409, 28.351770, 76.152084),
+        path: [
+            [28.351778, 76.148409],
+            [28.351770, 76.152084]
+        ]
+    },
+    {
+        from: 22,
+        to: 21,
+        weight: calculateDistance(28.354192, 76.148407, 28.351778, 76.148409),
+        path: [
+            [28.354192, 76.148407],
+            [28.351778, 76.148409]
+        ]
+    },
+    {
+        from: 23,
+        to: 22,
+        weight: calculateDistance(28.355107, 76.148407, 28.354192, 76.148407),
+        path: [
+            [28.355107, 76.148407],
+            [28.354488, 76.148384],
+            [28.354472, 76.148],
+            [28.354458, 76.148387],
+            [28.354192, 76.148407]
+        ]
+    },
+    {
+        from: 24,
+        to: 23,
+        weight: calculateDistance(28.355118, 76.147585, 28.355107, 76.148407),
+        path: [
+            [28.355118, 76.147585],
+            [28.355107, 76.148407]
+        ]
+    },
+    {
+        from: 25,
+        to: 24,
+        weight: calculateDistance(28.351750, 76.147206, 28.355118, 76.147585),
+        path: [
+            [28.351750, 76.147206],
+            [28.352116, 76.147603],
+            [28.355118, 76.147585]
+        ]
+    },
+    {
+        from: 26,
+        to: 25,
+        weight: calculateDistance(28.352639, 76.137619, 28.351750, 76.147206),
+        path: [
+            [28.352639, 76.137619],
+            [28.352175, 76.137139],
+            [28.352635, 76.137685],
+            [28.352281, 76.145442],
+            [28.351750, 76.147206]
+        ]
+    },
+    {
+        from: 27,
+        to: 26,
+        weight: calculateDistance(28.352630, 76.132837, 28.352639, 76.137619),
+        path: [
+            [28.352630, 76.132837],
+            [28.352639, 76.137619]
+        ]
+    },
+    {
+        from: 28,
+        to: 27,
+        weight: calculateDistance(28.351530, 76.132696, 28.352630, 76.132837),
+        path: [
+            [28.351530, 76.132696],
+            [28.351365, 76.132381],
+            [28.351526, 76.132697],
+            [28.352630, 76.132837]
+        ]
+    },
+    {
+        from: 16,
+        to: 8,
+        weight: calculateDistance(28.357855, 76.147511, 28.359415, 76.147374),
+        path: [
+            [28.357855, 76.147511],
+            [28.359415, 76.147374]
+        ]
+    },
+    {
+        from: 8,
+        to: 2,
+        weight: calculateDistance(28.359415, 76.147374, 28.360741, 76.147353),
+        path: [
+            [28.359415, 76.147374],
+            [28.360741, 76.147353]
+        ]
+    },
+    {
+        from: 6,
+        to: 3,
+        weight: calculateDistance(28.360064, 76.145944, 28.360742, 76.145928),
+        path: [
+            [28.360064, 76.145944],
+            [28.360742, 76.145928]
+        ]
+    },
+    {
+        from: 6,
+        to: 3,
+        weight: calculateDistance(28.359395, 76.145941, 28.360064, 76.145944),
+        path: [
+            [28.359395, 76.145941],
+            [28.360064, 76.145944]
+        ]
+    },
+    {
+        from: 24,
+        to: 16,
+        weight: calculateDistance(28.355118, 76.147585, 28.357855, 76.147511),
+        path: [
+            [28.355118, 76.147585],
+            [28.357855, 76.147511]
+        ]
+    },
+    {
+        from: 15,
+        to: 12,
+        weight: calculateDistance(28.357791, 76.144332, 28.358516, 76.144337),
+        path: [
+            [28.357791, 76.144332],
+            [28.3580833, 76.14425],
+            [28.358516, 76.144337]
+        ]
+    },
+    {
+        from: 25,
+        to: 21,
+        weight: calculateDistance(28.351750, 76.147206, 28.351778, 76.148409),
+        path: [
+            [28.351750, 76.147206],
+            [28.352136, 76.147578],
+            [28.351707, 76.148066],
+            [28.351778, 76.148409]
+        ]
+    },
+    {
+        from: 23,
+        to: 19,
+        weight: calculateDistance(28.355107, 76.148407, 28.355140, 76.152089),
+        path: [
+            [28.355107, 76.148407],
+            [28.355140, 76.152089]
+        ]
+    },
+    {
+        from: 26,
+        to: 28,
+        weight: calculateDistance(28.352639, 76.137619, 28.351353, 76.132454),
+        path: [
+            [28.352639, 76.137619],
+            [28.352699, 76.133644],
+            [28.351962, 76.133707],
+            [28.351655, 76.133183],
+            [28.351233, 76.133271],
+            [28.351294, 76.132878],
+            [28.351113, 76.132602],
+            [28.351353, 76.132454]
+        ],
+
+    },
+    {
+    from: 28,
+    to: 26,
+    weight: calculateDistance(28.352639, 76.137619, 28.351353, 76.132454),
+    path: [
+        [28.351353, 76.132454],
+        [28.351113, 76.132602],
+        [28.351294, 76.132878],
+        [28.351233, 76.133271],
+        [28.351655, 76.133183],
+        [28.351962, 76.133707],
+        [28.352742, 76.133630],
+        [28.352639, 76.137619]
+    ],
+},
+    {
+        from: 10,
+        to: 5,
+        weight: calculateDistance(28.359392, 76.144805, 28.360047, 76.144796),
+        path: [
+            [28.359392, 76.144805],
+            [28.360047, 76.144796]
+        ]
+    }
+            ]
+        };
+    }
+
+    pathwayNetwork = initializePathways();
+
+    // Function to get icon color based on fill level
+    function getIconColor(fillLevel) {
+        return fillLevel > 75 ? 'red' :
+               fillLevel > 50 ? 'yellow' : 'green';
+    }
+
+    // Add markers for bins
     var bins = {{ bins|safe }};
     bins.forEach(function(bin) {
-        var marker = L.marker([bin.latitude, bin.longitude]).addTo(map);
-        marker.bindPopup(`<b>${bin.bin_type}</b><br>Location: ${bin.location}<br>Fill Level: ${bin.current_fill_level}%`);
+        var iconColor = getIconColor(bin.current_fill_level);
+        
+        var coloredIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-' + iconColor + '.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [24, 40],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var marker = L.marker([bin.latitude, bin.longitude], {
+            icon: coloredIcon
+        }).addTo(map);
+
+        marker.bindPopup(`
+            <b>${bin.bin_type}</b><br>
+            Location: ${bin.location}<br>
+            Fill Level: ${bin.current_fill_level}%<br>
+            ${bin.current_fill_level > 50 ? '<button class="add-to-route" data-lat="' + bin.latitude + '" data-lng="' + bin.longitude + '">Add to Route</button>' : ''}
+        `);
+        
+        // Add to collection bins if fill level > 50%
+        if (bin.current_fill_level > 50) {
+            collectionBins.push({
+                lat: bin.latitude,
+                lng: bin.longitude,
+                fillLevel: bin.current_fill_level,
+                binId: bin.id
+            });
+        }
+    });
+
+    // Handle popup button clicks
+    map.on('popupopen', function(e) {
+        var popup = e.popup;
+        var addToRouteBtn = popup._contentNode.querySelector('.add-to-route');
+        if (addToRouteBtn) {
+            addToRouteBtn.addEventListener('click', function() {
+                var lat = parseFloat(this.getAttribute('data-lat'));
+                var lng = parseFloat(this.getAttribute('data-lng'));
+                addToRoute(lat, lng);
+                map.closePopup();
+            });
+        }
+    });
+
+    // Function to add a bin to the route
+    function addToRoute(lat, lng) {
+        var bin = collectionBins.find(b => b.lat === lat && b.lng === lng);
+        if (bin && !routeMarkers.some(m => m.getLatLng().lat === lat && m.getLatLng().lng === lng)) {
+            var marker = L.marker([lat, lng], {
+                icon: new L.Icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [24, 40],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                }),
+                zIndexOffset: 1000
+            }).addTo(map);
+            
+            marker.bindPopup(`<b>Collection Point</b><br>Fill Level: ${bin.fillLevel}%`);
+            routeMarkers.push(marker);
+            updateRouteStats();
+        }
+    }
+
+    // Dijkstra's algorithm for pathfinding
+    function dijkstra(graph, startId, endId) {
+        let distances = {};
+        let previous = {};
+        let nodes = new Set();
+        
+        graph.nodes.forEach(node => {
+            distances[node.id] = Infinity;
+            previous[node.id] = null;
+            nodes.add(node.id);
+        });
+        
+        distances[startId] = 0;
+        
+        while(nodes.size > 0) {
+            let current = Array.from(nodes).reduce((min, node) => 
+                distances[node] < distances[min] ? node : min);
+                
+            if (current === endId) {
+                break;
+            }
+            
+            nodes.delete(current);
+            
+            graph.edges
+                .filter(edge => edge.from === current)
+                .forEach(edge => {
+                    let alt = distances[current] + edge.weight;
+                    if (alt < distances[edge.to]) {
+                        distances[edge.to] = alt;
+                        previous[edge.to] = current;
+                    }
+                });
+        }
+        
+        let path = [endId];
+        while (path[0] !== startId) {
+            if (previous[path[0]] === null) {
+                return null; // No path exists
+            }
+            path.unshift(previous[path[0]]);
+        }
+        
+        // Get the full path coordinates
+        let fullPath = [];
+        for (let i = 0; i < path.length - 1; i++) {
+            let edge = graph.edges.find(e => e.from === path[i] && e.to === path[i+1]);
+            if (edge && edge.path) {
+                fullPath = fullPath.concat(i === 0 ? edge.path : edge.path.slice(1));
+            } else {
+                // Fallback to straight line if no path data
+                let fromNode = graph.nodes.find(n => n.id === path[i]);
+                let toNode = graph.nodes.find(n => n.id === path[i+1]);
+                fullPath.push([fromNode.lat, fromNode.lng]);
+                fullPath.push([toNode.lat, toNode.lng]);
+            }
+        }
+        
+        return fullPath;
+    }
+
+    // Function to find the nearest node in the pathway network
+    function findNearestNode(lat, lng) {
+        let minDist = Infinity;
+        let nearestNode = null;
+        
+        pathwayNetwork.nodes.forEach(node => {
+            const dist = L.latLng(lat, lng).distanceTo(L.latLng(node.lat, node.lng));
+            if (dist < minDist) {
+                minDist = dist;
+                nearestNode = node;
+            }
+        });
+        
+        return nearestNode;
+    }
+
+    // Function to optimize the route using custom pathways
+    function optimizeRoute() {
+        if (routeMarkers.length < 2) {
+            alert("You need at least 2 collection points to optimize a route");
+            return;
+        }
+
+        // Clear existing route if any
+        if (customRoute) {
+            map.removeLayer(customRoute);
+            customRoute = null;
+        }
+
+        // Get coordinates from markers
+        const points = routeMarkers.map(marker => marker.getLatLng());
+
+        // Find pathway nodes nearest to each point
+        const pointNodes = points.map(point => {
+            return findNearestNode(point.lat, point.lng);
+        });
+
+        // Find paths between all points (simplified approach)
+        let fullPath = [];
+        for (let i = 0; i < pointNodes.length - 1; i++) {
+            const pathSegment = dijkstra(pathwayNetwork, pointNodes[i].id, pointNodes[i+1].id);
+            if (pathSegment) {
+                fullPath = fullPath.concat(i === 0 ? pathSegment : pathSegment.slice(1));
+            }
+        }
+
+        // Draw the custom route
+        if (fullPath.length > 0) {
+            customRoute = L.polyline(fullPath, {
+                color: '#0066ff',
+                weight: 5,
+                opacity: 0.7,
+                className: 'custom-route'
+            }).addTo(map);
+            
+            // Zoom to show the entire route
+            map.fitBounds(customRoute.getBounds());
+        } else {
+            alert("Could not calculate a path between these points");
+        }
+    }
+
+    // Function to clear the route
+    function clearRoute() {
+        if (customRoute) {
+            map.removeLayer(customRoute);
+            customRoute = null;
+        }
+        
+        routeMarkers.forEach(marker => map.removeLayer(marker));
+        routeMarkers = [];
+        updateRouteStats();
+    }
+
+    // Function to update route statistics
+    function updateRouteStats() {
+        var stats = document.getElementById('route-stats');
+        if (routeMarkers.length > 0) {
+            var totalBins = routeMarkers.length;
+            var highPriority = routeMarkers.filter(m => {
+                var latlng = m.getLatLng();
+                var bin = collectionBins.find(b => b.lat === latlng.lat && b.lng === latlng.lng);
+                return bin && bin.fillLevel > 75;
+            }).length;
+            
+            stats.innerHTML = `
+                <strong>Route Summary:</strong><br>
+                Total Bins: ${totalBins}<br>
+                High Priority: ${highPriority}<br>
+                Medium Priority: ${totalBins - highPriority}
+            `;
+        } else {
+            stats.innerHTML = 'No bins added to route';
+        }
+    }
+
+    // Event listeners for buttons
+    document.getElementById('optimize-route').addEventListener('click', optimizeRoute);
+    document.getElementById('clear-route').addEventListener('click', clearRoute);
+
+    // Add legend to the map
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = `
+            <h4>Bin Fill Level</h4>
+            <div><i style="background: #2ecc71"></i> &lt; 50% (Low)</div>
+            <div><i style="background: #f1c40f"></i> 50-75% (Medium)</div>
+            <div><i style="background: #d63031"></i> &gt; 75% (High)</div>
+            <div><i style="background: #0066ff"></i> Selected for Collection</div>
+            <div><i style="background: #0066ff; width: 15px; height: 3px; margin-top: 8px;"></i> Collection Route</div>
+            <div><i style="background: #000000"></i> University Pathways</div>
+        `;
+        return div;
+    };
+    legend.addTo(map);
+
+    // Draw existing pathways on the map
+    pathwayNetwork.edges.forEach(edge => {
+        if (edge.path && edge.path.length > 0) {
+            L.polyline(edge.path, {
+                color: '#808080',
+                weight: 10,
+                opacity: 0.4
+            }).addTo(map);
+        }
     });
 </script>
-
 {% endblock content %}

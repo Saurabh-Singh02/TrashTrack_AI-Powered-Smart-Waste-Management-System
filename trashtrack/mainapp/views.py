@@ -39,10 +39,24 @@ def logout_view(request):
     return redirect('login')  # Redirect to login page after logout
 
 # Company signup view
+def company_portal(request):
+    if request.user.is_authenticated and hasattr(request.user, 'companyprofile'):
+        # User is already logged in and has a company profile
+        return render(request, 'company_portal.html')
+    else:
+        # User needs to register or login
+        return render(request, 'company_portal.html')
+
 def company_signup(request):
     if request.user.is_authenticated:
-        return redirect('company_portal')
-
+        if hasattr(request.user, 'companyprofile'):
+            # User already has a company profile
+            return redirect('company_portal')
+        else:
+            # User is logged in but has no company profile
+            return render(request, 'company_signup.html')
+    
+    # Handle the signup form submission
     if request.method == 'POST':
         form = CompanySignupForm(request.POST)
         if form.is_valid():
@@ -51,6 +65,7 @@ def company_signup(request):
             return redirect('company_portal')
     else:
         form = CompanySignupForm()
+    
     return render(request, 'company_signup.html', {'form': form})
 
 # Dashboard view to show all key data with notifications for bins over 70% full

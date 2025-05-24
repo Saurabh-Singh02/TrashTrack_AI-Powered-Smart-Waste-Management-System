@@ -1,5 +1,5 @@
 {% extends "base.html" %} 
-{% block title %}TrashTrack | Signup{% endblock title %}
+{% block title %}companies | Signup{% endblock title %}
 
 {% block style %}
 .signup-container {
@@ -166,4 +166,15 @@
     </form>
 </div>
 </section>
+<script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
+        const password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Passwords do not match!');
+        }
+    });
+   </script>
 {% endblock content %}

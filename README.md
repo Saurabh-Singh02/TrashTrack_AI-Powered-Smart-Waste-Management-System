@@ -72,3 +72,32 @@ To run the smart waste classification system, download the pre-trained machine l
 - [Saurabh Singh](https://github.com/Saurabh-Singh02) – Backend & ML Model
 - [Rishabh Sharma](https://github.com/StudentRishabhSharma) – Frontend, Debugging & Documentation
 
+## 👥 Contributors
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/Saurabh-Singh02">
+        <img src="https://github.com/Saurabh-Singh02.png" width="70px;" alt="Saurabh Singh"/>
+        <br /><sub><b>Saurabh Singh</b></sub>
+      </a>
+      <br />Backend & ML Model Training
+    </td>
+    <td align="center">
+      <a href="https://github.com/StudentRishabhSharma">
+        <img src="https://github.com/StudentRishabhSharma.png" width="70px;" alt="Rishabh Sharma"/>
+        <br /><sub><b>Rishabh Sharma</b></sub>
+      </a>
+      <br />Frontend, Debugging & Documentation
+    </td>
+  </tr>
+</table>
+
+
+
+
+
+
+
+
+

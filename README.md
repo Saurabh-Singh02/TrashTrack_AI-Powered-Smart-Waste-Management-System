@@ -13,6 +13,9 @@ TrashTrack is an AI-powered **smart bin system** designed to efficiently manage 
 
 ## 📂 Project Structure
 ```
+ML Model/
+│── combined.ipynb
+│── index.py
 TrashTrack/
 │── mainapp/          # Core Django app
 │── static/           # Static files

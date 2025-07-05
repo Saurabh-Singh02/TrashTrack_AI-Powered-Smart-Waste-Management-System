@@ -67,3 +67,8 @@ The app will be live at: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 To run the smart waste classification system, download the pre-trained machine learning model from the link below:
 
 📥 [Download ML Model](https://drive.google.com/file/d/14vusReS36Gr3K_pz9EXxIToher9N0tB3/view?usp=drive_link)
+
+## Contributors
+- [Saurabh Singh](https://github.com/Saurabh-Singh02) – Backend & ML Model
+- [Rishabh Sharma](https://github.com/StudentRishabhSharma) – Frontend, Debugging & Documentation
+

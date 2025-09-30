@@ -1,3 +1,8 @@
+[![Live Demo](https://img.shields.io/badge/🌐%20Live-Demo-green?style=for-the-badge)](https://trashtrack.pythonanywhere.com)
+
+TrashTrack is an AI-powered **smart bin system** designed to efficiently manage waste using **machine learning** and IoT. The system detects waste types, monitors fill levels, and integrates with a web application for real-time tracking, waste collection, and company waste purchasing.
+
+
 # 🚀 TrashTrack - Smart Waste Management System
 
 TrashTrack is an AI-powered **smart bin system** designed to efficiently manage waste using **machine learning** and IoT. The system detects waste types, monitors fill levels, and integrates with a web application for real-time tracking, waste collection, and company waste purchasing.
